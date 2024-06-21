@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register/Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="page-container">
+    <div id="content-wrap">
+  <header class="header">
+    <img src="logo.png" alt="Company Logo" class="logo">
+
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="about.html">About Us</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <div id="form-container">
+      <form id="register-form" onsubmit="register(event)">
+        <h2>Register</h2>
+        <label for="register-username">Username</label>
+        <input type="text" id="register-username" required><br>
+
+        <label for="register-email">Email</label>
+        <input type="email" id="register-email" required><br>
+
+        <label for="register-password">Password</label>
+        <input type="password" id="register-password" required><br>
+
+        <button type="submit" id="signup">Register</button>
+        <button type="button" onclick="showLogin()">Switch to Login</button>
+      </form>
+
+      <form id="login-form" onsubmit="login(event)" style="display: none;">
+        <h2>Login</h2>
+
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required><br>
+
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required><br>
+
+        <button type="submit" id="signin">Login</button>
+        <button type="button" onclick="showRegister()">Switch to Register</button>
+      </form>
+    </div>
+  </main>
+</div>
+<footer id="footer">
+  <hr>
+  <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+</footer>
+</div>
+  <!-- Import Firebase and scripts -->
+  <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <!-- Add additional Firebase products that you want to use -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
+
+  <!-- Your custom JavaScript files -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlCMR9NQgWg2r1I1xPZ2AZ6lk-yoZDOOg",
+      authDomain: "agriculture-ecomm.firebaseapp.com",
+      databaseURL: "https://agriculture-ecomm-default-rtdb.firebaseio.com",
+      projectId: "agriculture-ecomm",
+      storageBucket: "agriculture-ecomm.appspot.com",
+      messagingSenderId: "1081774247089",
+      appId: "1:1081774247089:web:6c57438b3bae218bcf2690",
+      measurementId: "G-3EJRGTGY4V"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const analytics = getAnalytics(app);
+
+    function showRegister() {
+      document.getElementById('register-form').style.display = 'block';
+      document.getElementById('login-form').style.display = 'none';
+    }
+
+    function showLogin() {
+      document.getElementById('register-form').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+    }
+
+    document.getElementById('signup').addEventListener('click', (e) => {
+      e.preventDefault();
+      var username = document.getElementById('register-username').value;
+      var email = document.getElementById('register-email').value;
+      var password = document.getElementById('register-password').value;
+
+      createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        alert('User created successfully!');
+        // Add user data to Firestore
+        return addDoc(collection(db, "users"), {
+          username: username,
+          email: email,
+          createdAt: new Date()
+        });
+      })
+      .then(() => {
+        // Clear the form fields
+        document.getElementById('register-username').value = '';
+        document.getElementById('register-email').value = '';
+        document.getElementById('register-password').value = '';
+        // Optionally switch to login form after successful registration
+        showLogin();
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage);
+      });
+    });
+
+document.getElementById('signin').addEventListener('click', (e) => {
+      e.preventDefault();
+      var email = document.getElementById('login-email').value;
+      var password = document.getElementById('login-password').value;
+
+      signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        alert('User logged in successfully!');
+
+        window.location.href = "index.html";
+
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage);
+      });
+    })
+
+    // Make the showRegister, showLogin, register, and login functions globally accessible
+    window.showRegister = showRegister;
+    window.showLogin = showLogin;
+  </script>
+  <script src="background.js"></script>
+
+</body>
+</html>

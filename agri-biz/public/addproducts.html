@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add products</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="page-container">
+    <div id="content-wrap">
+      <!-- all other page content -->
+      <header class="header">
+        <img src="logo.png" alt="Company Logo" class="logo">
+        <nav>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="products.html">Products</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count">0</span></a></li>
+            <li><a href="#" id="manage-account-link" style="display: none;" onclick="showManageAccount()">Manage Account</a></li>
+            <li><a href="#" id="logout-link" style="display: none;" onclick="logout()">Logout</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main>
+        <div id="form-container">
+          <form id="add-product-form">
+            <h2>Add Product</h2>
+            <label for="product-name">Product Name</label>
+            <input type="text" id="product-name" required><br>
+
+            <label for="product-description">Description</label>
+            <textarea id="product-description" rows="4" cols="50" required></textarea><br>
+
+            <label for="product-price">Price</label>
+            <input type="number" id="product-price" step="0.01" required><br>
+            <label for="product-category">Category</label>
+            <input type="text" id="product-category" required><br>
+
+            <label for="product-image">Image</label>
+            <input type="file" id="product-image" accept="image/*" required><br>
+
+            <button type="submit" id="productForm">Add Product</button>
+          </form>
+
+      </main>
+    </div>
+    <footer id="footer">
+      <hr>
+      <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Import Firebase and scripts -->
+  <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <!-- Add additional Firebase products that you want to use -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword as updatePasswordFirebase, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, deleteDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAlCMR9NQgWg2r1I1xPZ2AZ6lk-yoZDOOg",
+        authDomain: "agriculture-ecomm.firebaseapp.com",
+        databaseURL: "https://agriculture-ecomm-default-rtdb.firebaseio.com",
+        projectId: "agriculture-ecomm",
+        storageBucket: "agriculture-ecomm.appspot.com",
+        messagingSenderId: "1081774247089",
+        appId: "1:1081774247089:web:6c57438b3bae218bcf2690",
+        measurementId: "G-3EJRGTGY4V"
+      };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const analytics = getAnalytics(app);
+
+    const productForm = document.getElementById('add-product-form');
+
+    if (productForm) {
+      productForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const productName = document.getElementById('product-name').value;
+        const productDescription = document.getElementById('product-description').value;
+        const productPrice = parseFloat(document.getElementById('product-price').value);
+        const productCategory = document.getElementById('product-category').value;
+        const productImage = document.getElementById('product-image').files[0];
+
+        if (productImage) {
+          const storageRef = ref(storage, 'products/' + productImage.name);
+          uploadBytes(storageRef, productImage).then(snapshot => {
+            getDownloadURL(snapshot.ref).then((downloadURL) => {
+              addDoc(collection(db, 'products'), {
+                name: productName,
+                description: productDescription,
+                price: productPrice,
+                category: productCategory,
+                imageUrl: downloadURL
+              })
+              .then(function(docRef) {
+                console.log('Product added with ID:', docRef.id);
+                alert('Product added successfully!');
+                window.location.href = 'products.html';
+              })
+              .catch(function(error) {
+                console.error('Error adding product:', error);
+                alert('Error adding product: ' + error.message);
+              });
+            });
+          }).catch(function(error) {
+            console.error('Error uploading image:', error);
+            alert('Error uploading image: ' + error.message);
+          });
+        } else {
+          alert('Please select an image for the product.');
+        }
+      });
+    }
+  </script>
+  <script src="background.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Chatbot Container -->
+<div id="page-container">
+    <div id="content-wrap">
+      <!-- all other page content -->
+      <header class="header">
+        <img src="logo.png" alt="Company Logo" class="logo">
+        <nav>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="products.html">Products</a></li>
+              <li><a href="register.html">Register</a></li>
+              <li><a href="about.html">About Us</a></li>
+              <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count">0</span></a></li>
+              <li><a href="#" id="manage-account-link" style="display: none;" onclick="showManageAccount()">Manage Account</a></li>
+              <li><a href="#" id="logout-link" style="display: none;" onclick="logout()">Logout</a></li>
+            </ul>
+          </nav>
+    </header>
+    <main>
+        <section>
+            <h1>About Us</h1>
+            <p>Welcome to our website! Here at AGRI-BIZ, we are dedicated to providing high quality products.</p>
+        </section>
+        <section>
+            <h2>Contact Us</h2>
+            <form action="submit_contact_form.php" method="POST" class="contact-form">
+                <label for="name">Name:</label><br>
+                <input type="text" id="name" name="name" required><br>
+                <label for="email">Email:</label><br>
+                <input type="email" id="email" name="email" required><br>
+                <label for="message">Message:</label><br>
+                <textarea id="message" name="message" rows="4" required></textarea><br>
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>Terms and Conditions</h2>
+            <p>To review our Terms and Conditions, please click <a href="terms-and-conditions.html" class="terms-link">here</a>.</p>
+        </section>
+    </main>
+
+      <div class="chatbot-container" id="chatbot-container">
+        <div class="chatbot-header">
+            Chat with Our Assistant
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chatbot-message bot-message">
+                Hi! How can I assist you today?
+            </div>
+        </div>
+        <div class="chatbot-input-container">
+            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Type your message...">
+            <button type="button" id="send-btn" class="chatbot-send-btn">Send</button>
+        </div>
+    </div>
+    </div>
+    <footer id="footer">
+        <hr>
+        <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+      </footer>
+  </div>
+
+<!-- ChatGPT Script -->
+<script src="https://cdn.jsdelivr.net/npm/@openai/chatgpt"></script>
+<script>
+    const chatContainer = document.getElementById('chatbot-container');
+    const chatMessages = document.getElementById('chatbot-messages');
+    const chatInput = document.getElementById('chatbot-input');
+    const sendButton = document.getElementById('send-btn');
+
+    // Initialize ChatGPT
+    const chatGPT = new ChatGPT({
+        model: 'gpt-3.5-turbo',
+        apiKey: 'sk-proj-LibNzpxA3YUxj87PxKJtT3BlbkFJnXhvJvRKWBaek0Qxkdr6',
+        showAvatar: false // Hide avatar for simplicity
+    });
+
+    // Function to send a user message to ChatGPT and display the response
+    async function sendMessageToChatGPT(message) {
+        // Add user message to chat window
+        appendMessage(message, 'user-message');
+
+        // Send user message to ChatGPT
+        const response = await chatGPT.send(message);
+
+        // Add ChatGPT's response to chat window
+        appendMessage(response, 'bot-message');
+    }
+
+    // Function to append a message to the chat window
+    function appendMessage(message, className) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chatbot-message', className);
+        messageElement.innerText = message;
+        chatMessages.appendChild(messageElement);
+
+        // Automatically scroll chat window to the bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send button click event listener
+    sendButton.addEventListener('click', () => {
+        const message = chatInput.value.trim();
+        if (message !== '') {
+            sendMessageToChatGPT(message);
+            chatInput.value = '';
+        }
+    });
+
+    // Handle pressing Enter key
+    chatInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            const message = chatInput.value.trim();
+            if (message !== '') {
+                sendMessageToChatGPT(message);
+                chatInput.value = '';
+            }
+        }
+    });
+
+    // Initial welcome message from ChatGPT
+    sendMessageToChatGPT('Hello');
+</script>
+<script src="background.js"></script>
+
+</body>
+</html>

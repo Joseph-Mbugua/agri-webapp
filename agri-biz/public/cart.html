@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="firebase.js"></script>
+
+</head>
+<body>
+  <div id="page-container">
+    <div id="content-wrap">
+      <!-- all other page content -->
+      <header class="header">
+        <img src="logo.png" alt="Company Logo" class="logo">
+        <nav>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="products.html">Products</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count">0</span></a></li>
+            <li><a href="#" id="manage-account-link" style="display: none;" onclick="showManageAccount()">Manage Account</a></li>
+            <li><a href="#" id="logout-link" style="display: none;" onclick="logout()">Logout</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main>
+        <h1>Cart</h1>
+    
+        <div id="cart-container" class="cart-container"></div>
+        <div id="total-container" class="total-container"></div>
+        <button id="checkout-button">Checkout</button>
+    
+        <!-- Shipping Address Form -->
+        <div id="shipping-form-container" style="display: none;">
+          <h2>Shipping Address</h2>
+          <form id="shipping-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br><br>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required><br><br>
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" required><br><br>
+            <label for="state">State:</label>
+            <input type="text" id="state" name="state" required><br><br>
+            <label for="zip">ZIP Code:</label>
+            <input type="text" id="zip" name="zip" required><br><br>
+            <button type="submit">Proceed to Payment</button>
+          </form>
+        </div>
+    
+        <!-- PayPal Container -->
+        <div class="terms-frame">
+        <div id="paypal-container-ACBLBEHUHJ3HE" style="display: none;"></div>
+      </main>
+    </div>
+  </div>
+    <footer id="footer">
+      <hr>
+      <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="https://www.paypal.com/sdk/js?client-id=BAAZAFQgrySkcSHoFvYgJpilHIw4u7IqmbRGfMOGc4ToUKq5UKGQRRbpTw6zzM6otEtD7_VY5K0FgVRBn4&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlCMR9NQgWg2r1I1xPZ2AZ6lk-yoZDOOg",
+      authDomain: "agriculture-ecomm.firebaseapp.com",
+      databaseURL: "https://agriculture-ecomm-default-rtdb.firebaseio.com",
+      projectId: "agriculture-ecomm",
+      storageBucket: "agriculture-ecomm.appspot.com",
+      messagingSenderId: "1081774247089",
+      appId: "1:1081774247089:web:6c57438b3bae218bcf2690",
+      measurementId: "G-3EJRGTGY4V"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const analytics = getAnalytics(app);
+
+
+
+    // Function to render cart items
+    function renderCart() {
+      const cartContainer = document.getElementById('cart-container');
+      const totalContainer = document.getElementById('total-container');
+      cartContainer.innerHTML = ''; // Clear previous content
+      totalContainer.innerHTML = ''; // Clear previous content
+
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      let total = 0;
+
+      cart.forEach((product, index) => {
+        const cartItem = document.createElement('div');
+        cartItem.classList.add('cart-item');
+
+        const productImage = document.createElement('img');
+        productImage.src = product.imageUrl;
+        productImage.alt = product.name;
+
+        const productName = document.createElement('h2');
+        productName.textContent = product.name;
+
+        const productDescription = document.createElement('p');
+        productDescription.textContent = product.description;
+
+        const productPrice = document.createElement('p');
+        productPrice.textContent = `Price: $${product.price}`;
+
+        total += product.price;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => {
+          removeFromCart(index);
+        });
+
+        cartItem.appendChild(productImage);
+        cartItem.appendChild(productName);
+        cartItem.appendChild(productDescription);
+        cartItem.appendChild(productPrice);
+        cartItem.appendChild(removeBtn);
+
+        cartContainer.appendChild(cartItem);
+      });
+
+      const totalPrice = document.createElement('h2');
+      totalPrice.textContent = `Total: $${total.toFixed(2)}`;
+      totalContainer.appendChild(totalPrice);
+
+      // Update cart count
+      updateCartCount();
+    }
+
+    // Function to remove item from cart
+    function removeFromCart(index) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      cart.splice(index, 1);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    // Function to update cart count
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      document.getElementById('cart-count').textContent = cart.length;
+    }
+
+    // Function to show the shipping address form
+    function showShippingForm() {
+      document.getElementById('shipping-form-container').style.display = 'block';
+    }
+
+    // Function to show PayPal container after form submission
+    function showPaypalContainer() {
+      document.getElementById('paypal-container-ACBLBEHUHJ3HE').style.display = 'block';
+    }
+
+    // Function to save shipping address to Firebase
+    function saveShippingAddressToFirebase(address) {
+      const newAddressKey = firebase.database().ref().child('addresses').push().key;
+      const updates = {};
+      updates['/addresses/' + newAddressKey] = address;
+      return firebase.database().ref().update(updates);
+    }
+
+    // Event listener for the checkout button
+    document.getElementById('checkout-button').addEventListener('click', () => {
+      showShippingForm();
+    });
+
+    // Function to save shipping address to Firestore
+    function saveShippingAddressToFirestore(address) {
+      return addDoc(collection(db, 'addresses'), address);
+    }
+
+
+    // Event listener for the shipping form
+    document.getElementById('shipping-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const address = document.getElementById('address').value;
+      const city = document.getElementById('city').value;
+      const state = document.getElementById('state').value;
+      const zip = document.getElementById('zip').value;
+
+      const addressData = { name, address, city, state, zip };
+
+
+      // Save the shipping address to Firestore
+      saveShippingAddressToFirestore(addressData)
+        .then(() => {
+          // Hide the shipping form and show the PayPal button (if needed)
+          document.getElementById('shipping-form-container').style.display = 'none';
+          document.getElementById('paypal-container-ACBLBEHUHJ3HE').style.display = 'block'; // Example to show PayPal container
+        })
+        .catch((error) => {
+          console.error('Error saving shipping address:', error);
+        });
+    });
+
+    // Render PayPal buttons
+    paypal.HostedButtons({
+      hostedButtonId: "ACBLBEHUHJ3HE",
+    }).render("#paypal-container-ACBLBEHUHJ3HE");
+
+    // Initial render of the cart
+    renderCart();
+  </script>
+  <script src="background.js"></script>
+  <script type="module" src="firebase.js"></script>
+
+
+</body>
+</html>

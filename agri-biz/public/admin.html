@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Import Firebase scripts -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
+
+    <!-- Your custom JavaScript file -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlCMR9NQgWg2r1I1xPZ2AZ6lk-yoZDOOg",
+            authDomain: "agriculture-ecomm.firebaseapp.com",
+            databaseURL: "https://agriculture-ecomm-default-rtdb.firebaseio.com",
+            projectId: "agriculture-ecomm",
+            storageBucket: "agriculture-ecomm.appspot.com",
+            messagingSenderId: "1081774247089",
+            appId: "1:1081774247089:web:6c57438b3bae218bcf2690",
+            measurementId: "G-3EJRGTGY4V"
+          };
+
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const analytics = getAnalytics(app);
+
+        // Function to fetch users from Firestore
+        function fetchUsers() {
+            getDocs(collection(db, 'users'))
+                .then((querySnapshot) => {
+                    const userTableBody = document.getElementById('user-table-body');
+                    userTableBody.innerHTML = ''; // Clear previous data
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${user.username}</td>
+                            <td>${user.email}</td>
+                            <td><button class="delete-btn" onclick="deleteUser('${doc.id}')">Delete</button></td>
+                        `;
+                        userTableBody.appendChild(tr);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error fetching users: ", error);
+                });
+        }
+
+        // Function to fetch products from Firestore
+        function fetchProducts() {
+            getDocs(collection(db, 'products'))
+                .then((querySnapshot) => {
+                    const productTableBody = document.getElementById('product-table-body');
+                    productTableBody.innerHTML = ''; // Clear previous data
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${product.name}</td>
+                            <td>${product.description}</td>
+                            <td>${product.price}</td>
+                            <td>${product.category}</td>
+                            <td><img src="${product.imageUrl}" alt="${product.name}" style="width:50px;height:50px;"></td>
+                            <td><button class="edit-btn" onclick="editProduct('${doc.id}')">Edit</button></td>
+                        `;
+                        productTableBody.appendChild(tr);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error fetching products: ", error);
+                });
+        }
+
+        // Function to delete a user from Firestore
+        window.deleteUser = function(userId) {
+            deleteDoc(doc(db, 'users', userId))
+                .then(() => {
+                    console.log("User successfully deleted!");
+                    alert('User deleted successfully!');
+                    fetchUsers(); // Refresh user list after deletion
+                })
+                .catch((error) => {
+                    console.error("Error deleting user: ", error);
+                });
+        }
+
+        document.getElementById('add-product-btn').addEventListener('click', function() {
+            const productNameInput = prompt('Enter product name:');
+            const productDescriptionInput = prompt('Enter product description:');
+            const productPriceInput = parseFloat(prompt('Enter product price:'));
+            const productCategoryInput = prompt('Enter product category:');
+            const productImageInput = prompt('Enter product image URL (optional):');
+
+            const newProduct = {
+                name: productNameInput,
+                description: productDescriptionInput,
+                price: productPriceInput,
+                category: productCategoryInput,
+                imageUrl: productImageInput || ''
+            };
+
+            addDoc(collection(db, 'products'), newProduct)
+                .then((docRef) => {
+                    console.log("Product added with ID: ", docRef.id);
+                    alert('Product added successfully!');
+                    fetchProducts(); // Refresh product list after addition
+                })
+                .catch((error) => {
+                    console.error("Error adding product: ", error);
+                });
+        });
+
+
+        // Function to edit a product
+        window.editProduct = function(productId) {
+            const editForm = document.getElementById('edit-product-form');
+            const productNameInput = document.getElementById('edit-product-name');
+            const productDescriptionInput = document.getElementById('edit-product-description');
+            const productPriceInput = document.getElementById('edit-product-price');
+            const productCategoryInput = document.getElementById('edit-product-category');
+            const productImageInput = document.getElementById('edit-product-image');
+
+            getDoc(doc(db, 'products', productId))
+                .then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const product = docSnap.data();
+                        productNameInput.value = product.name;
+                        productDescriptionInput.value = product.description;
+                        productPriceInput.value = product.price;
+                        productCategoryInput.value = product.category;
+
+                        editForm.onsubmit = function(event) {
+                            event.preventDefault();
+
+                            const updatedProduct = {
+                                name: productNameInput.value,
+                                description: productDescriptionInput.value,
+                                price: parseFloat(productPriceInput.value),
+                                category: productCategoryInput.value
+                            };
+
+                            if (productImageInput.files[0]) {
+                                const storageRef = ref(storage, 'products/' + productImageInput.files[0].name);
+                                uploadBytes(storageRef, productImageInput.files[0]).then(snapshot => {
+                                    getDownloadURL(snapshot.ref).then((downloadURL) => {
+                                        updatedProduct.imageUrl = downloadURL;
+                                        updateProduct(productId, updatedProduct);
+                                    });
+                                }).catch((error) => {
+                                    console.error('Error uploading image:', error);
+                                    alert('Error uploading image: ' + error.message);
+                                });
+                            } else {
+                                updateProduct(productId, updatedProduct);
+                            }
+                        };
+
+                        document.getElementById('edit-product-section').style.display = 'block';
+                    } else {
+                        console.error('No such document!');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error getting document:", error);
+                });
+        };
+
+        function updateProduct(productId, updatedProduct) {
+            updateDoc(doc(db, 'products', productId), updatedProduct)
+                .then(() => {
+                    console.log("Product successfully updated!");
+                    alert('Product updated successfully!');
+                    document.getElementById('edit-product-section').style.display = 'none';
+                    fetchProducts(); // Refresh product list after update
+                })
+                .catch((error) => {
+                    console.error("Error updating product: ", error);
+                });
+        }
+
+        // Fetch users and products on page load
+        document.getElementById('show-users-btn').addEventListener('click', function() {
+            document.getElementById('user-section').style.display = 'block';
+            document.getElementById('product-section').style.display = 'none';
+            document.getElementById('edit-product-section').style.display = 'none';
+            fetchUsers();
+        });
+
+        document.getElementById('show-products-btn').addEventListener('click', function() {
+            document.getElementById('user-section').style.display = 'none';
+            document.getElementById('product-section').style.display = 'block';
+            document.getElementById('edit-product-section').style.display = 'none';
+            fetchProducts();
+        });
+
+    </script>
+    <script src="background.js"></script>
+
+</head>
+<body>
+    <div id="page-container">
+        <div id="content-wrap">
+            <header class="header">
+                <img src="logo.png" alt="Company Logo" class="logo">
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="register.html">Register</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count">0</span></a></li>
+                    </ul>
+                </nav>
+            </header>
+            <div class="terms-frame">
+                <h1>Admin Dashboard</h1>
+                <button id="show-users-btn">Show Registered Users</button>
+                <button id="show-products-btn">Show Products</button>
+                <button id="add-product-btn">Add Product</button>
+
+
+                <div id="user-section" style="display: none;">
+                    <h2>Registered Users</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- User data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="product-section" style="display: none;">
+                    <h2>Products</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Price</th>
+                                <th>Category</th>
+                                <th>Image</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-table-body">
+                            <!-- Product data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="edit-product-section" style="display: none;">
+                    <h2>Edit Product</h2>
+                    <form id="edit-product-form">
+                        <label for="edit-product-name">Name:</label>
+                        <input type="text" id="edit-product-name" name="name" required>
+                        <label for="edit-product-description">Description:</label>
+                        <textarea id="edit-product-description" name="description" required></textarea>
+                        <label for="edit-product-price">Price:</label>
+                        <input type="number" id="edit-product-price" name="price" required>
+                        <label for="edit-product-category">Category:</label>
+                        <input type="text" id="edit-product-category" name="category" required>
+                        <label for="edit-product-image">Image:</label>
+                        <input type="file" id="edit-product-image" name="image">
+                        <button type="submit">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+            <hr>
+            <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
