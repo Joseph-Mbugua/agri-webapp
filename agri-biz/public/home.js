@@ -19,15 +19,13 @@ const storage = getStorage(app);
 
 document.addEventListener("DOMContentLoaded", () => {
   renderSlides();
-  updateCartCount();
 });
-
 async function renderSlides() {
   const slideshowContainer = document.getElementById("slideshow-container");
   slideshowContainer.innerHTML = ""; // Clear previous content
 
   const querySnapshot = await getDocs(collection(db, "products"));
-  let slideIndex = 1;
+  let slideIndex = 0; // Start at the first slide
 
   querySnapshot.forEach((doc) => {
     const product = doc.data();
@@ -49,35 +47,31 @@ async function renderSlides() {
     slideshowContainer.appendChild(slideDiv);
   });
 
-  showSlides(slideIndex);
+  showSlides(); // Initialize the slideshow
 
-  function showSlides(n) {
+  function showSlides() {
     let i;
     const slides = document.getElementsByClassName("mySlides");
     const dots = document.getElementsByClassName("dot");
 
-    if (n > slides.length) { slideIndex = 1 }
-    if (n < 1) { slideIndex = slides.length }
     for (i = 0; i < slides.length; i++) {
       slides[i].style.display = "none";
     }
+    slideIndex++;
+    if (slideIndex > slides.length) { slideIndex = 1 }
     for (i = 0; i < dots.length; i++) {
       dots[i].className = dots[i].className.replace(" active", "");
     }
     slides[slideIndex - 1].style.display = "block";
     dots[slideIndex - 1].className += " active";
+    setTimeout(showSlides, 3000); // Change image every 3 seconds
   }
 
   window.plusSlides = function(n) {
-    showSlides(slideIndex += n);
+    showSlides(slideIndex += n - 1); // Adjust slideIndex to match manual control
   };
 
   window.currentSlide = function(n) {
     showSlides(slideIndex = n);
   };
-}
-
-function updateCartCount() {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  document.getElementById("cart-count").textContent = cart.length;
 }
