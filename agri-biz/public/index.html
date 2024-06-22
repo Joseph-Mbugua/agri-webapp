@@ -9,37 +9,35 @@
 <body>
   <div id="page-container">
     <div id="content-wrap">
-  <header class="header">
-    <img src="logo.png" alt="Company Logo" class="logo">
-
-    <nav>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="register.html">Register/Login</a></li>
-        <li><a href="about.html">About Us</a></li>
-      </ul>
-    </nav>
-  </header>
-  <main>
-    <div class="slideshow-container" id="slideshow-container">
-      <!-- Slides will be populated dynamically -->
+      <header class="header">
+        <img src="logo.png" alt="Company Logo" class="logo">
+        <nav>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="register.html">Register/Login</a></li>
+            <li><a href="about.html">About Us</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main>
+        <div class="slideshow-container" id="slideshow-container">
+          <!-- Slides will be populated dynamically -->
+        </div>
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+        <div class="dot-container">
+          <div style="text-align:center">
+            <!-- Dots will be populated dynamically -->
+          </div>
+        </div>
+        <button id="explore-more-button" onclick="window.location.href='register.html'">Explore More</button>
+      </main>
     </div>
-    <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-    <a class="next" onclick="plusSlides(1)">&#10095;</a>
-    <br>
-    <div style="text-align:center">
-      <span class="dot" onclick="currentSlide(1)"></span>
-      <span class="dot" onclick="currentSlide(2)"></span>
-      <span class="dot" onclick="currentSlide(3)"></span>
-    </div>
-    <button id="explore-more-button" onclick="window.location.href='register.html'">Explore More</button>
-  </main>
-</div>
-<footer id="footer">
-  <hr>
-  <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
-</footer>
-</div>
+    <footer id="footer">
+      <hr>
+      <p>Developed by Joseph Mbugua © 2024. All rights reserved.</p>
+    </footer>
+  </div>
   <!-- Import Firebase and scripts -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
@@ -49,6 +47,5 @@
 
   <script src="home.js" type="module"></script>
   <script src="background.js"></script>
-
 </body>
 </html>

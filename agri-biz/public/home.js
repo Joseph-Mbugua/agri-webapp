@@ -22,12 +22,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 async function renderSlides() {
   const slideshowContainer = document.getElementById("slideshow-container");
+  const dotsContainer = document.querySelector("div[style='text-align:center']");
   slideshowContainer.innerHTML = ""; // Clear previous content
+  dotsContainer.innerHTML = ""; // Clear previous dots
 
   const querySnapshot = await getDocs(collection(db, "products"));
   let slideIndex = 0; // Start at the first slide
 
-  querySnapshot.forEach((doc) => {
+  querySnapshot.forEach((doc, index) => {
     const product = doc.data();
 
     const slideDiv = document.createElement("div");
@@ -45,33 +47,42 @@ async function renderSlides() {
     slideDiv.appendChild(productImage);
     slideDiv.appendChild(textDiv);
     slideshowContainer.appendChild(slideDiv);
+
+    // Create dot
+    const dot = document.createElement("span");
+    dot.classList.add("dot");
+    dot.addEventListener("click", () => {
+      currentSlide(index + 1);
+    });
+    dotsContainer.appendChild(dot);
   });
 
-  showSlides(); // Initialize the slideshow
+  showSlides(slideIndex); // Initialize the slideshow
 
-  function showSlides() {
+  function showSlides(n) {
     let i;
     const slides = document.getElementsByClassName("mySlides");
     const dots = document.getElementsByClassName("dot");
 
+    if (n >= slides.length) { slideIndex = 0 }
+    if (n < 0) { slideIndex = slides.length - 1 }
+
     for (i = 0; i < slides.length; i++) {
       slides[i].style.display = "none";
     }
-    slideIndex++;
-    if (slideIndex > slides.length) { slideIndex = 1 }
     for (i = 0; i < dots.length; i++) {
       dots[i].className = dots[i].className.replace(" active", "");
     }
-    slides[slideIndex - 1].style.display = "block";
-    dots[slideIndex - 1].className += " active";
-    setTimeout(showSlides, 3000); // Change image every 3 seconds
+    slides[slideIndex].style.display = "block";
+    dots[slideIndex].className += " active";
+    setTimeout(() => showSlides(slideIndex + 1), 3000); // Change image every 3 seconds
   }
 
-  window.plusSlides = function(n) {
-    showSlides(slideIndex += n - 1); // Adjust slideIndex to match manual control
+  window.plusSlides = function (n) {
+    showSlides(slideIndex += n);
   };
 
-  window.currentSlide = function(n) {
-    showSlides(slideIndex = n);
+  window.currentSlide = function (n) {
+    showSlides(slideIndex = n - 1);
   };
 }

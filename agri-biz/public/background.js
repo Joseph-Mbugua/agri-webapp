@@ -5,6 +5,10 @@ const images = [
     'bg3.jpg',
     'bg4.jpg',
     'bg5.jpg',
+    'Logo1.png',
+    'Logo2.png',
+
+
 
 
     // Add more image paths as needed
